@@ -30,10 +30,24 @@ interface PostPagination {
 
 interface HomeProps {
   postsPagination: PostPagination;
+  preview?: boolean;
 }
 
 export default function Home({ postsPagination, preview = false }: HomeProps) {
-  const [posts, setPosts] = useState<Post[]>(postsPagination.results);
+  const [posts, setPosts] = useState<Post[]>(
+    postsPagination.results.map(result => {
+      return {
+        ...result,
+        first_publication_date: format(
+          new Date(result.first_publication_date),
+          'dd MMM yyyy',
+          {
+            locale: ptBR,
+          }
+        ),
+      };
+    })
+  );
   const [nextPage, setNextPage] = useState(postsPagination.next_page);
 
   function handleNextPage(): void {
@@ -90,6 +104,14 @@ export default function Home({ postsPagination, preview = false }: HomeProps) {
           </button>
         </footer>
       )}
+
+      {preview && (
+        <aside>
+          <Link href="/api/exit-preview">
+            <a>Sair do modo Preview</a>
+          </Link>
+        </aside>
+      )}
     </div>
   );
 }
@@ -111,13 +133,7 @@ export const getStaticProps: GetStaticProps = async ({
   const posts = postsResponse.results.map(post => {
     return {
       uid: post.uid,
-      first_publication_date: format(
-        new Date(post.first_publication_date),
-        'dd MMM yyyy',
-        {
-          locale: ptBR,
-        }
-      ),
+      first_publication_date: post.first_publication_date,
       data: {
         author: post.data.author,
         subtitle: post.data.subtitle,
